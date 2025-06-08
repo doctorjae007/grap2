@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>กราฟแท่งพร้อมเส้นค่าเฉลี่ยตัดแกน Y</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    input[type="number"] {
+      width: 80px;
+      margin: 5px;
+    }
+    .input-row {
+      margin: 8px 0;
+    }
+    canvas {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>กราฟแท่ง พร้อมเส้นค่าเฉลี่ย</h2>
+
+<label for="personCount">จำนวนปี: </label>
+<select id="personCount" onchange="generateInputs()">
+  <script>
+    for (let i = 1; i <= 10; i++) {
+      document.write(`<option value="${i}" ${i === 10 ? 'selected' : ''}>${i} ปี</option>`);
+    }
+  </script>
+</select>
+
+<div id="inputArea"></div>
+
+<button onclick="generateChart()">แสดงกราฟ</button>
+
+<canvas id="myChart" width="700" height="400"></canvas>
+
+<script>
+let chart;
+
+function generateInputs() {
+  const count = parseInt(document.getElementById('personCount').value);
+  const inputArea = document.getElementById('inputArea');
+  inputArea.innerHTML = '';
+
+  for (let i = 0; i < count; i++) {
+    inputArea.innerHTML += `
+      <div class="input-row">
+        <label>ปีที่ ${i + 1}:</label>
+        <input type="number" id="val${i}" value="${300 + i * 5}">
+      </div>
+    `;
+  }
+}
+
+function generateChart() {
+  const count = parseInt(document.getElementById('personCount').value);
+  const dataPoints = [];
+
+  for (let i = 0; i < count; i++) {
+    let val = parseFloat(document.getElementById('val' + i).value);
+    if (isNaN(val)) val = 0;
+    dataPoints.push(val);
+  }
+
+  const sum = dataPoints.reduce((a, b) => a + b, 0);
+  const average = sum / dataPoints.length;
+
+  const labels = dataPoints.map((_, i) => `ปีที่ ${i + 1}`);
+  const minY = Math.floor((Math.min(...dataPoints, average) - 10) / 10) * 10;
+  const maxY = Math.ceil((Math.max(...dataPoints, average) + 10) / 10) * 10;
+
+  const data = {
+    labels: labels,
+    datasets: [{
+      label: 'ค่าที่กรอก',
+      data: dataPoints,
+      backgroundColor: 'skyblue',
+    }]
+  };
+
+  const config = {
+    type: 'bar',
+    data: data,
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: minY,
+          max: maxY,
+          title: {
+            display: true,
+            text: 'ค่า',
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'บุคคล',
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true
+        },
+        tooltip: {
+          enabled: true
+        },
+        annotation: {
+          annotations: {
+            averageLine: {
+              type: 'line',
+              yMin: average,
+              yMax: average,
+              borderColor: 'red',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                enabled: true,
+                content: `เฉลี่ย: ${average.toFixed(2)}`,
+                position: 'start',
+                yAdjust: -10,
+                backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                color: 'red',
+                font: {
+                  weight: 'bold'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
+  if (chart) chart.destroy();
+  const ctx = document.getElementById('myChart').getContext('2d');
+  chart = new Chart(ctx, config);
+}
+
+window.onload = generateInputs;
+</script>
+
+</body>
+</html>
